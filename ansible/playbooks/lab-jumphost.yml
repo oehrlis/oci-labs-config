@@ -1,0 +1,28 @@
+---
+- name: Configure OCI labs jumphost / gateway
+  hosts: localhost
+  connection: local
+  become: true
+
+  vars:
+    # Defaults – werden von cloud-init/ansible-pull via --extra-vars überschrieben
+    ssh_port: 22
+    enable_wireguard: true
+    wireguard_port: 51820
+
+  roles:
+    - role: common
+    - role: base_ssh
+      vars:
+        ssh_port: "{{ ssh_port }}"
+        ssh_password_auth: false
+    - role: firewall
+      vars:
+        firewall_ssh_port: "{{ ssh_port }}"
+        firewall_wireguard_port: "{{ wireguard_port }}"
+        firewall_enable_wireguard: "{{ enable_wireguard }}"
+    - role: fail2ban
+    - role: wireguard_gateway
+      vars:
+        wireguard_port: "{{ wireguard_port }}"
+        enable_wireguard: "{{ enable_wireguard }}"

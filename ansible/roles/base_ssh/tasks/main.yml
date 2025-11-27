@@ -1,0 +1,40 @@
+---
+- name: Ensure sshd_config exists
+  ansible.builtin.stat:
+    path: /etc/ssh/sshd_config
+  register: sshd_config_stat
+
+- name: Fail if sshd_config is missing
+  ansible.builtin.fail:
+    msg: "/etc/ssh/sshd_config not found, cannot configure SSH."
+  when: not sshd_config_stat.stat.exists
+
+- name: Ensure sshd listens on correct address and port
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    marker: "# ANSIBLE MANAGED BLOCK - SSH LISTEN"
+    block: |
+      Port {{ ssh_port }}
+      ListenAddress {{ ssh_listen_address }}
+  notify: restart sshd
+
+- name: Configure password authentication
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    marker: "# ANSIBLE MANAGED BLOCK - SSH AUTH"
+    block: |
+      PasswordAuthentication {% if ssh_password_auth %}yes{% else %}no{% endif %}
+  notify: restart sshd
+
+- name: Ensure sshd is enabled and running
+  ansible.builtin.service:
+    name: sshd
+    enabled: true
+    state: started
+
+# Handler
+- name: restart sshd
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+  listen: restart sshd
