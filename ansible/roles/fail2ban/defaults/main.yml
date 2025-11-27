@@ -1,4 +1,0 @@
----
-fail2ban_sshd_enabled: true
-fail2ban_sshd_maxretry: 5
-fail2ban_sshd_bantime: 600

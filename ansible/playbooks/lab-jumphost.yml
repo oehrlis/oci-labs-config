@@ -14,6 +14,5 @@
     - role: common_hardening
     - role: base_ssh
     - role: firewall
-    - role: fail2ban
     - role: wireguard_gateway
     - role: jumphost_base
