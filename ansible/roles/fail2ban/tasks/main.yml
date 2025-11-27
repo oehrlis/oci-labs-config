@@ -4,26 +4,13 @@
     name: fail2ban
     state: present
 
-- name: Configure basic fail2ban jail for sshd
-  ansible.builtin.blockinfile:
-    path: /etc/fail2ban/jail.local
-    create: true
-    block: |
-      [sshd]
-      enabled  = {{ 'true' if fail2ban_sshd_enabled else 'false' }}
-      maxretry = {{ fail2ban_sshd_maxretry }}
-      bantime  = {{ fail2ban_sshd_bantime }}
-  notify: restart fail2ban
-
 - name: Ensure fail2ban is enabled and running
   ansible.builtin.service:
     name: fail2ban
-    enabled: true
     state: started
+    enabled: true
 
-# Handler
-- name: restart fail2ban
-  ansible.builtin.service:
-    name: fail2ban
-    state: restarted
-  listen: restart fail2ban
+# ggf. Konfig anpassen + notify
+# - name: Deploy jail.local
+#   ...
+#   notify: restart fail2ban

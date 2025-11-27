@@ -1,45 +1,19 @@
 ---
-- name: Configure OCI Labs jumphost / gateway
-  hosts: localhost
-  connection: local
+- name: Configure jumphost gateway
+  hosts: all
   become: true
   gather_facts: true
 
-  # Sicherstellen, dass wir sinnvolle Defaults haben, falls jemand das Playbook
-  # ohne extra-vars direkt lokal aufruft.
   vars:
-    ssh_port: "{{ ssh_port | default(22) }}"
-    enable_wireguard: "{{ enable_wireguard | default(true) }}"
-    lab_name: "{{ lab_name | default('lab-unknown') }}"
+    ssh_port: 16022          # wird von Cloud-Init/extra-vars überschrieben
+    enable_wireguard: false  # dito
+    lab_name: "chzh-l-odb19eng-01"
 
   roles:
     - role: common
-      tags: [common, base]
-
     - role: common_hardening
-      tags: [hardening, security]
-
-    - role: jumphost_base
-      tags: [jumphost, base]
-
     - role: base_ssh
-      vars:
-        ssh_port: "{{ ssh_port }}"
-        ssh_password_auth: false
-      tags: [ssh, security]
-
     - role: firewall
-      vars:
-        firewall_ssh_port: "{{ ssh_port }}"
-        firewall_wireguard_port: 51820
-        firewall_enable_wireguard: "{{ enable_wireguard }}"
-      tags: [firewall, network, security]
-
     - role: fail2ban
-      tags: [fail2ban, security]
-
     - role: wireguard_gateway
-      vars:
-        wireguard_port: 51820
-        enable_wireguard: "{{ enable_wireguard }}"
-      tags: [wireguard, vpn, gateway]
+    - role: jumphost_base

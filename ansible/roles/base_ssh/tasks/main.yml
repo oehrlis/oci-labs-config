@@ -1,40 +1,31 @@
 ---
-- name: Ensure sshd_config exists
-  ansible.builtin.stat:
+- name: Ensure sshd_config uses custom SSH port
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-  register: sshd_config_stat
-
-- name: Fail if sshd_config is missing
-  ansible.builtin.fail:
-    msg: "/etc/ssh/sshd_config not found, cannot configure SSH."
-  when: not sshd_config_stat.stat.exists
-
-- name: Ensure sshd listens on correct address and port
-  ansible.builtin.blockinfile:
-    path: /etc/ssh/sshd_config
-    marker: "# ANSIBLE MANAGED BLOCK - SSH LISTEN"
-    block: |
-      Port {{ ssh_port }}
-      ListenAddress {{ ssh_listen_address }}
+    regexp: '^#?Port '
+    line: "Port {{ ssh_port }}"
+    state: present
+    backrefs: yes
   notify: restart sshd
 
-- name: Configure password authentication
-  ansible.builtin.blockinfile:
+- name: Ensure PasswordAuthentication is disabled
+  ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
-    marker: "# ANSIBLE MANAGED BLOCK - SSH AUTH"
-    block: |
-      PasswordAuthentication {% if ssh_password_auth %}yes{% else %}no{% endif %}
+    regexp: '^#?PasswordAuthentication '
+    line: "PasswordAuthentication no"
+    state: present
+    backrefs: yes
   notify: restart sshd
+
+- name: Allow SSH port in SELinux
+  ansible.builtin.command: "semanage port -a -t ssh_port_t -p tcp {{ ssh_port }}"
+  register: semanage_result
+  changed_when: semanage_result.rc == 0
+  failed_when: semanage_result.rc not in [0, 1]
+  when: ansible_selinux.status == "enabled"
 
 - name: Ensure sshd is enabled and running
   ansible.builtin.service:
     name: sshd
-    enabled: true
     state: started
-
-# Handler
-- name: restart sshd
-  ansible.builtin.service:
-    name: sshd
-    state: restarted
-  listen: restart sshd
+    enabled: true

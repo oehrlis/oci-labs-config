@@ -7,21 +7,19 @@
 - name: Ensure firewalld is enabled and running
   ansible.builtin.service:
     name: firewalld
-    enabled: true
     state: started
+    enabled: true
 
 - name: Open SSH port in firewalld
-  ansible.posix.firewalld:
-    port: "{{ firewall_ssh_port }}/tcp"
+  ansible.builtin.firewalld:
+    port: "{{ ssh_port }}/tcp"
     permanent: true
     state: enabled
     immediate: true
-    zone: "{{ firewall_default_zone }}"
 
-- name: Open WireGuard port in firewalld
-  ansible.posix.firewalld:
-    port: "{{ firewall_wireguard_port }}/udp"
+- name: Open WireGuard port in firewalld (optional)
+  ansible.builtin.firewalld:
+    port: "51820/udp"
     permanent: true
-    state: "{{ 'enabled' if firewall_enable_wireguard else 'disabled' }}"
+    state: "{{ 'enabled' if enable_wireguard else 'disabled' }}"
     immediate: true
-    zone: "{{ firewall_default_zone }}"
